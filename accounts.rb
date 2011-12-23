@@ -17,6 +17,13 @@ class Record
     @summary = nil      # 摘要
     @payee = nil        # 支払先
   end
+  def ok?
+    if @item != nil && @sum_of_money != nil && @date != nil
+      true
+    else
+      false
+    end
+  end
 
   #
   #
@@ -182,20 +189,24 @@ if __FILE__ == $0
     s_in = STDIN.gets.chomp
     s_in = bef if s_in =~ /^$/
     case
-    when s_in =~ /^(all print|a)$/
+    when s_in =~ /^(all print|all|a)$/
       display_recs(recs)
     when s_in =~ /^(print|p)$/
       display_rec(rec, item_code)
     when s_in =~ /^(quit|q)$/
       break
     when s_in =~ /^(help|h)$/
-      message("all print|a|print|p|quit|q|help|h|ok|add") 
+      message("all print|all|a|print|p|quit|q|help|h|ok|add") 
       item.out
     when s_in =~ /^(help \d+|h \d+)$/
-      message("all print|a|print|p|quit|q|help|h|ok|add") 
+      message("all print|all|a|print|p|quit|q|help|h|ok|add") 
       item.lookup(s_in.sub(/^h\S*\s+/, ""))
     when s_in =~ /^(ok|add)$/
-      ok(recs, rec)
+      if rec.ok?
+        ok(recs, rec)
+      else
+        message("ERROR")
+      end
     else
       if ! rec.add(item_code, s_in)
         message("ERROR")
