@@ -48,10 +48,10 @@ class Record
   #
   # Recordに、s_inを追加
   #
-  def add(item_code, s_in)
+  def add(item_code, s_in, i_year)
     case
     when s_in =~ /\d{4}?\/?\d{1,2}\/\d{1,2}/ # 年月日
-      @date = self.complement_date(s_in)
+      @date = self.complement_date(s_in, i_year)
       message("日付:#{@date}")
       true
     when s_in =~ /^\d{4}$/                # 科目
@@ -172,8 +172,9 @@ if __FILE__ == $0
   item_code = ItemCode.new("./item.txt")
   recs = []
   item = Item.new(item_code)
-  if ARGV[0] != nil
-    data_file = ARGV[0]
+  i_year = ARGV[0].to_i if ARGV[0] != nil
+  if ARGV[1] != nil
+    data_file = ARGV[1]
   else
     data_file = "./accounts.dat"
   end
@@ -208,7 +209,7 @@ if __FILE__ == $0
         message("ERROR")
       end
     else
-      if ! rec.add(item_code, s_in)
+      if ! rec.add(item_code, s_in, i_year)
         message("ERROR")
       end
     end
