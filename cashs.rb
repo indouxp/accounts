@@ -8,20 +8,17 @@ require './item.rb'
 #
 class Record
   require 'date'
-  attr_accessor :item, :receive_money, :payment_money, :date, :summary, :payee
+  $msgs = {0=>"年月日", 1=>"科目コード", 2=>"取引金額", 3=>"摘要", 4=>"支払先など"}
+  attr_accessor :item, :sum_of_money, :date, :summary, :payee
   def initialize
-    @date = nil          # 日付
-    @item = nil          # 科目
-    @receive_money = nil # 入金金額
-    @payment_money = nil # 出金金額
-    @summary = nil       # 摘要
-    @payee = nil         # 支払先
+    @date = nil         # 日付
+    @item = nil         # 科目
+    @sum_of_money = nil # 金額
+    @summary = nil      # 摘要
+    @payee = nil        # 支払先
   end
   def ok?
-    if @item != nil && 
-      @receive_money != nil &&
-      @payment_money != nil &&
-      @date != nil
+    if @item != nil && @sum_of_money != nil && @date != nil
       true
     else
       false
@@ -64,35 +61,17 @@ class Record
         @item = s_in
         message("科目:#{result}")
       else
-        @receive_money = s_in.to_i      # 入金金額
-        @payment_money = 0              # 出金金額
-        message("入金金額:#{@receive_money}")
-        message("出金金額:#{@payment_money}")
+        @sum_of_money = s_in.to_i
+        message("金額:#{@sum_of_money.to_s}")
       end
       true
-    when s_in =~ /^\\-?\d+$/
-      money = s_in.sub(/^\\/, "").to_i
-      if money < 0
-        @payment_money = money * -1
-        @receive_money = 0
-      else
-        @receive_money = money
-        @payment_money = 0
-      end
-      message("入金金額:#{@receive_money}")
-      message("出金金額:#{@payment_money}")
+    when s_in =~ /^\\\d+$/
+      @sum_of_money = s_in.sub(/^\\/, "").to_i
+      message("金額:#{@sum_of_money.to_s}")
       true
-    when s_in =~ /^-?\d+$/
-      money = s_in.to_i
-      if money < 0
-        @payment_money = money * -1
-        @receive_money = 0
-      else
-        @receive_money = money
-        @payment_money = 0
-      end
-      message("入金金額:#{@receive_money}")
-      message("出金金額:#{@payment_money}")
+    when s_in =~ /^\d+$/
+      @sum_of_money = s_in.to_i
+      message("金額:#{@sum_of_money.to_s}")
       true
     else
       result = false
@@ -119,11 +98,10 @@ end
 
 def display_rec(rec, item_code)
   puts "日付  :Date   :#{rec.date}"
+  puts "科目  :Item   :#{rec.item}:#{item_code.check(rec.item)}" 
+  puts "金額          :#{rec.sum_of_money}"
   puts "摘要  :Summary:#{rec.summary}"
   puts "支払先:Payee  :#{rec.payee}"
-  puts "科目  :Item   :#{rec.item}:#{item_code.check(rec.item)}" 
-  puts "入金金額      :#{rec.receive_money}"
-  puts "出金金額      :#{rec.payment_money}"
 end
 
 def message(str, question=false)
@@ -173,24 +151,19 @@ end
 def clear(rec)
   rec.date = nil
   rec.item = nil
-  rec.receive_money = nil
-  rec.payment_money = nil
+  rec.sum_of_money = nil
   rec.summary = nil
   rec.payee = nil
 end
 
-def display_recs(recs, start_money)
-  puts "期首残高:#{start_money}"
-  balance_money = start_money
+def display_recs(recs)
   recs.each do |rec|
-    fields = rec.split(/,/)
-    balance_money = balance_money - fields[4].to_i + fields[5].to_i
-    puts "#{rec} :#{balance_money}"
+    puts rec
   end
 end
 
 def ok(recs, rec)
-  recs.push("#{rec.date},#{rec.summary},#{rec.payee},#{rec.item},#{rec.payment_money},#{rec.receive_money}")
+  recs.push("#{rec.date},#{rec.item},#{rec.sum_of_money},#{rec.summary},#{rec.payee}")
   clear(rec)
   rec = nil
   rec = Record.new
@@ -203,11 +176,8 @@ if __FILE__ == $0
   i_year = ARGV[0].to_i if ARGV[0] != nil # ARGV[0]:年度
   if ARGV[1] != nil                       # ARGV[1]:データファイル
     data_file = ARGV[1]
-    if ARGV[2] != nil                     # ARGV[2]:期末残高
-      start_money = ARGV[2].to_i    
-    end
   else
-    data_file = "./accounts.dat"
+    data_file = "./cachs.dat"
   end
   File.open(data_file) do |f|
     f.each do |line|
@@ -222,7 +192,7 @@ if __FILE__ == $0
     s_in = bef if s_in =~ /^$/
     case
     when s_in =~ /^(all print|all|a)$/
-      display_recs(recs, start_money)
+      display_recs(recs)
     when s_in =~ /^(print|p)$/
       display_rec(rec, item_code)
     when s_in =~ /^(quit|q)$/
@@ -246,7 +216,7 @@ if __FILE__ == $0
     end
     bef = s_in
   end
-  display_recs(recs, start_money)
+  display_recs(recs)
   File.open(data_file, "w") do |f|
     recs.each do |line|
       f.puts(line)

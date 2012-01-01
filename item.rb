@@ -13,7 +13,7 @@ class ItemCode
     File.open(file) do |f|
       f.each do |l|
         line = l.chomp.to_s
-        if line !~ /^#/ # 空白行スキップ
+        if line !~ /^\s*#/ && line !~ /^\s*$/ # コメント行、空白行スキップ
           fields = line.split(/,/)
           @items[fields[$CODE].to_s] = fields[$COMMENT].to_s
         end
