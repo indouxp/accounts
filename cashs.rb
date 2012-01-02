@@ -177,7 +177,7 @@ if __FILE__ == $0
   if ARGV[1] != nil                       # ARGV[1]:データファイル
     data_file = ARGV[1]
   else
-    data_file = "./cachs.dat"
+    data_file = "./cashs.dat"
   end
   File.open(data_file) do |f|
     f.each do |line|
